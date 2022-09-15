@@ -1,0 +1,99 @@
+
+user  nginx;
+worker_processes  auto;
+
+error_log  /var/log/nginx/error.log notice;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    proxy_cache_path /etc/nginx/cache keys_zone=one:10m;
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  test  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+    log_format syslog_format '$remote_addr - "$remote_user" [$time_local] "$request" $status $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for" "$host" sn="$server_name" rt="$request_time" ua="$upstream_addr" us="$upstream_status" ut="$upstream_response_time" ul="$upstream_response_length" cs="$upstream_cache_status"';
+    #access_log syslog:server=1.1.1.1;
+    access_log  /var/log/nginx/access.log  test;
+  
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    include /etc/nginx/conf.d/*.conf;
+    server {
+    listen 8080;
+    #listen 10.155.231.103;
+
+    location /api {
+        api write=on;
+        # directives limiting access to the API
+    }
+
+    location = /dashboard.html {
+        root   /usr/share/nginx/html;
+    }
+
+    # Redirect requests made to the pre-NGINX Plus API dashboard
+    location = /status.html {
+        return 301 /dashboard.html;
+    }
+    }
+    upstream google_server {
+        zone   google 64k;
+        server www.google.com:443;
+    }
+upstream facebook_server {
+        zone   facebook 64k;
+        server www.facebook.com:443;
+    }
+
+server {
+     status_zone status_page;
+     listen 80;
+     listen 10.155.231.103;
+     #listen 443 ssl;]
+     #ssl_certificate /etc/nginx/certs/mycert.cert;
+     #ssl_certificate_key /etc/nginx/certs/mycert.key;
+    #  listen 443 ssl;
+    #  ssl_certificate /etc/nginx/certs/gencert1.crt;
+    #  ssl_certificate_key /etc/nginx/certs/gencert1.key;
+     #location / {
+      #      add_header Content-Type text/html;
+           # return 200 '<html><body><p><font size="7" face="arial" color="red">Nothing To Do Here!</font></body></p></html>';
+       # }
+     location /google {
+            rewrite ^/google$ / break; 
+            proxy_set_header Host www.google.com;
+            proxy_pass https://google_server;
+            status_zone location_zone;
+            health_check;
+        }
+     location /facebook {
+            rewrite ^/facebook$ / break; 
+            proxy_set_header Host www.facebook.com;
+            proxy_pass https://facebook_server;
+            status_zone location_zone;
+            health_check;
+        }
+      location /test {
+        add_header Content-Type text/html;
+        return 200 '<html><body><p><font size="7" face="arial" color="red">Hello World</font></body></p></html>';
+        #return 200 '<html><body>Hello World</body></html>';
+        status_zone location_zone;
+        }
+    }
+
+}
+

@@ -1,0 +1,102 @@
+#################################Backend authorized
+map $http_apikey $apikey_name {
+    "abc" key1;
+    "def" key2;
+    "ghi" key3;
+     default "";
+
+    }
+
+server {
+     status_zone status_page;
+     listen 80;
+     listen 10.155.231.67;
+     #listen 443 ssl;]
+     #ssl_certificate /etc/nginx/certs/mycert.cert;
+     #ssl_certificate_key /etc/nginx/certs/mycert.key;
+    #  listen 443 ssl;
+    #  ssl_certificate /etc/nginx/certs/gencert1.crt;
+    #  ssl_certificate_key /etc/nginx/certs/gencert1.key;
+     #location / {
+      #      add_header Content-Type text/html;
+           # return 200 '<html><body><p><font size="7" face="arial" color="red">Nothing To Do Here!</font></body></p></html>';
+       # }
+     location /google {
+            rewrite ^/google$ / break;
+            proxy_set_header Host www.google.com;
+            proxy_pass https://google_server;
+            proxy_hide_header Set-Cookie;
+            status_zone location_zone;
+            health_check;
+            access_log  /var/log/nginx/access.log  test;
+        }
+     location /facebook {
+            rewrite ^/facebook$ / break;
+            proxy_set_header Host www.facebook.com;
+            proxy_pass https://facebook_server;
+            status_zone location_zone;
+        #    health_check interval=1;
+        }
+      location /test {
+        add_header Content-Type text/html;
+        return 200 '<html><body><p><font size="7" face="arial" color="red">Hello World</font></body></p></html>';
+        #return 200 '<html><body>Hello World</body></html>';
+        status_zone location_zone;
+        }
+       location /authed {
+        auth_request /try_auth;
+        rewrite ^ / break;
+        proxy_pass http://10.155.231.64:30000;
+      }
+       location /try_auth {
+        if ($http_apikey = ""){
+		return 401 "no apikey";
+		}
+        if ($apikey_name = ""){
+		return 403 "wrong key or expired";
+      		}
+	return 204;
+    }
+}
+#################################
+proxy
+map $http_authorization $a {
+    "" 0;
+    default 1;
+}
+
+map $http_x_authorization_internal $b {
+    "" 0;
+    default 1;
+}
+map $a$b $new_uri {
+	00 /auth_required;
+	01 /auth_required;
+	10 /auth_required;
+	11 0 ;
+}
+
+upstream my_upstreama {
+	server 10.155.231.93:30000;
+}
+server {
+    listen 10.155.231.95:5001;
+    location / {
+        if ($new_uri) {
+            #rewrite ^ $new_uri break; # redirect requests to the location with auth_request
+            rewrite ^ /auth_required last; # redirect requests to the location with auth_request
+        }
+        proxy_pass http://my_upstreama;
+    }
+
+    location /auth_required {
+        rewrite ^ $request_uri break; # return the original request for further processing
+         auth_request /authed;
+         proxy_pass http://my_upstreama;
+    }
+
+    location /authed {
+        internal;
+        proxy_pass http://10.155.231.67;
+    }
+}

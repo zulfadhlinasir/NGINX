@@ -1,0 +1,77 @@
+z.nasir@C02G337HML85 Potential to be Delete % cat a | grep "\S"
+
+
+I’ve just created a tiny PoC with your case and found that keyval directive works as expected.
+keyval_zone zone=green:128k state=/var/db/nginx/state/green.keyval;
+keyval $http_my_cookie $my_var zone=green;
+server {
+    listen 8088;
+    location /api {
+        api write=on;
+    }
+    location = /dashboard.html {
+        root /usr/local/www/nginx-dist;
+    }
+}
+server {
+    listen 8080;
+    return 200 "OK!\nmy_var=$my_var\n";
+}
+-----------------------------
+#!/bin/sh
+# upload 1 via api
+curl -v -d @1.jq http://127.0.0.1:8088/api/7/http/keyvals/green
+# check availability via api
+curl http://127.0.0.1:8088/api/7/http/keyvals/green && echo ''
+# send a request
+curl -H "My-Cookie: 12345" http://127.0.0.1:8080/
+# clean up
+curl -v -X DELETE http://127.0.0.1:8088/api/7/http/keyvals/green
+#EOF
+-------------------------------
+% cat 1.jq
+{"12345": "67890"}
+% ./kv.sh
+*   Trying 127.0.0.1:8088...
+* Connected to 127.0.0.1 (127.0.0.1) port 8088 (#0)
+> POST /api/7/http/keyvals/green HTTP/1.1
+> Host: 127.0.0.1:8088
+> User-Agent: curl/7.83.1
+> Accept: */*
+> Content-Length: 18
+> Content-Type: application/x-www-form-urlencoded
+>
+* Mark bundle as not supporting multiuse
+< HTTP/1.1 201 Created
+< Server: nginx/1.21.5
+< Date: Wed, 22 Jun 2022 13:13:22 GMT
+< Content-Length: 0
+< Location: http://127.0.0.1:8088/api/7/http/keyvals/green/
+< Connection: keep-alive
+<
+* Connection #0 to host 127.0.0.1 left intact
+{"12345":"67890"}
+OK!
+my_var=67890
+*   Trying 127.0.0.1:8088...
+* Connected to 127.0.0.1 (127.0.0.1) port 8088 (#0)
+> DELETE /api/7/http/keyvals/green HTTP/1.1
+> Host: 127.0.0.1:8088
+> User-Agent: curl/7.83.1
+> Accept: */*
+>
+* Mark bundle as not supporting multiuse
+< HTTP/1.1 204 No Content
+< Server: nginx/1.21.5
+< Date: Wed, 22 Jun 2022 13:13:22 GMT
+< Connection: keep-alive
+<
+* Connection #0 to host 127.0.0.1 left intact
+z.nasir@C02G337HML85 Potential to be Delete %
+
+
+
+
+
+
+

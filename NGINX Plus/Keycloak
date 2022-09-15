@@ -1,0 +1,147 @@
+Keycloak
+
+1. Create a Rapidlab environment ( 1 N+  & 1 Ubuntu server withDOcker installed) 
+2. Create a keycloak container using this command: 
+
+docker run -d -p 9000:8080 -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=admin quay.io/keycloak/keycloak:16.1.0
+
+3. Access Keyclaok using the browser:  
+
+http://<IP ADDRESS OF UBUNT SERVER>:9000
+
+username: admin
+password: admin 
+
+4. Navigate to the top left side part , click the drop-dopwn menu of "Master" and click "Add realm" and give it any name (e.g. company_lon) 
+5. Enter and the name and keep all other options as is and create
+
+
+6. Update N+ config to add the following and verify config can load successfully: 
+
+
+##################################
+map_hash_bucket_size 256;
+
+# Mapping jwt tokens for correct endpoint
+map $jwt_claim_azp $jwturi {
+  "Mycompany_lon" /_jwtcompany_lon;
+}
+
+
+
+server {
+    listen 5000;
+    error_log /tmp/jwt-debug debug;
+    location /auth {
+        auth_jwt $jwt_claim_azp;
+        auth_jwt_key_request $jwturi;
+    }
+
+    location /_jwtcompany_lon {
+        proxy_pass "http://10.171.132.25:9000/auth/realms/company_lon/protocol/openid-connect/certs";
+    }
+}
+##################################
+
+
+7. Craft a JWT token with "Mycompany_lon" as $jwt_claim_azp
+
+
+######### Generate Token from Keycloak
+
+1. Create user and set password from the credential tab (DISABLE the "temporary" option" 
+
+example: 
+username: usernamea
+password: passworda
+
+2. Under Clients on the left side pane, create a new client called "Mycompany_lon"
+
+3. Run the following command:
+
+
+curl -d 'client_id=Mycompany_lon' -d 'username=usernamea' -d 'password=passworda' -d 'grant_type=password' 'http://10.171.132.24:9000/auth/realms/company_lon/protocol/openid-connect/token' | python -m json.tool
+
+Expected output:
+
+NOTE: Tokens expire in 5 minutes, after that you will receive 401 if you still using the same toke
+
+
+- create variable caleld token: 
+
+token=`curl -k -d 'client_id=Mycompany_lon' -d 'username=hossam' -d 'password=hossam' -d 'grant_type=password' 'https://10.171.132.24:9443/auth/realms/company_lon/protocol/openid-connect/token' 2>/dev/null| jq .access_token | tr -d '"'`
+
+- Verify the token variable: 
+echo $token
+
+
+
+root@00028635-ubuntu-server1:~# curl -d 'client_id=Mycompany_lon' -d 'username=username' -d 'password=password' -d 'grant_type=password' 'http://10.171.132.24:9000/auth/realms/company_lon/protocol/openid-connect/token' | python -m json.tool
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  2190  100  2120  100    70  16060    530 --:--:-- --:--:-- --:--:-- 16717
+{
+    "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiRTY3Vl9WenBGLTVHZmFIaUZuZ0lOSTBQU1VZUGRGNTJJMUR6VjljUFNJIn0.eyJleHAiOjE2NTUzMTAzOTcsImlhdCI6MTY1NTMxMDA5NywianRpIjoiZjU4YzY4NzUtMTk1NC00NjEyLTkwMjItMWMwZGIyNzdmZDIyIiwiaXNzIjoiaHR0cDovLzEwLjE3MS4xMzIuMjQ6OTAwMC9hdXRoL3JlYWxtcy9hdGhsb24iLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNzZkMTJlNjQtMjk0OC00ZjFjLTgyYTItZGI2OThlYWQ5MDhmIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiTXlBdGhsb24iLCJzZXNzaW9uX3N0YXRlIjoiMTAzNjY3OWEtYjMyZi00NjkxLTgwYTItOTVmNWM3MWFiNDg1IiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsImRlZmF1bHQtcm9sZXMtYXRobG9uIiwidW1hX2F1dGhvcml6YXRpb24iXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJzaWQiOiIxMDM2Njc5YS1iMzJmLTQ2OTEtODBhMi05NWY1YzcxYWI0ODUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6Imp1bmlvciJ9.z27ZNd1nLw2exgYOlTqDiyptnS4ppGzTqnf7MdlLy-L3LrbbrlILUxIidZAV8_PGZkjWrjmQ3N9S0VwhMOjXECWZEZIV0-nLbPMCd46nZpFGl51YBFX03EVcHnag2Y1dkxwOE3NxDrkwjk7VLzvc1GK4QEW8uYP5KFApdWBGwWuwEEAtLZNmo2-zJbtHXeBVUe1qBKPtE_S5WnKrNBX2oruI2u9OW5EMtngHlx7dfqGJ9ocWkzEDjbxfT5TBcgcPHSW7nUeY2tz0ScrsM-EwisHSOFkFjdbO8honIlpZ8fD_H_kuZHE8vQyieZ0cL7Q16kCPCth3ILV6yR0y3prcoA",
+    "expires_in": 300,
+    "not-before-policy": 0,
+    "refresh_expires_in": 1800,
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIyN2Q4YWU1ZC1hNDY2LTRiOTYtODczNS1hMTIwOGZhZmNjYzcifQ.eyJleHAiOjE2NTUzMTE4OTcsImlhdCI6MTY1NTMxMDA5NywianRpIjoiNTM3NGRhNjUtMzllZS00MjgxLWI0MDMtMWZhM2I1ODY2YWM5IiwiaXNzIjoiaHR0cDovLzEwLjE3MS4xMzIuMjQ6OTAwMC9hdXRoL3JlYWxtcy9hdGhsb24iLCJhdWQiOiJodHRwOi8vMTAuMTcxLjEzMi4yNDo5MDAwL2F1dGgvcmVhbG1zL2F0aGxvbiIsInN1YiI6Ijc2ZDEyZTY0LTI5NDgtNGYxYy04MmEyLWRiNjk4ZWFkOTA4ZiIsInR5cCI6IlJlZnJlc2giLCJhenAiOiJNeUF0aGxvbiIsInNlc3Npb25fc3RhdGUiOiIxMDM2Njc5YS1iMzJmLTQ2OTEtODBhMi05NWY1YzcxYWI0ODUiLCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJzaWQiOiIxMDM2Njc5YS1iMzJmLTQ2OTEtODBhMi05NWY1YzcxYWI0ODUifQ.WN4yx00QoJsWRaO_w46K0XZh0HNEBsNT02En-s-ilGI",
+    "scope": "profile email",
+    "session_state": "1036679a-b32f-4691-80a2-95f5c71ab485",
+    "token_type": "Bearer"
+}
+
+#########
+
+
+8. Test:
+
+
+- Craft a curl command using the token generated in the last command: 
+
+curl http://localhost:5000/auth -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiRTY3Vl9WenBGLTVHZmFIaUZuZ0lOSTBQU1VZUGRGNTJJMUR6VjljUFNJIn0.eyJleHAiOjE2NTUzMTAzOTcsImlhdCI6MTY1NTMxMDA5NywianRpIjoiZjU4YzY4NzUtMTk1NC00NjEyLTkwMjItMWMwZGIyNzdmZDIyIiwiaXNzIjoiaHR0cDovLzEwLjE3MS4xMzIuMjQ6OTAwMC9hdXRoL3JlYWxtcy9hdGhsb24iLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNzZkMTJlNjQtMjk0OC00ZjFjLTgyYTItZGI2OThlYWQ5MDhmIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoiTXlBdGhsb24iLCJzZXNzaW9uX3N0YXRlIjoiMTAzNjY3OWEtYjMyZi00NjkxLTgwYTItOTVmNWM3MWFiNDg1IiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsImRlZmF1bHQtcm9sZXMtYXRobG9uIiwidW1hX2F1dGhvcml6YXRpb24iXX0sInJlc291cmNlX2FjY2VzcyI6eyJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6InByb2ZpbGUgZW1haWwiLCJzaWQiOiIxMDM2Njc5YS1iMzJmLTQ2OTEtODBhMi05NWY1YzcxYWI0ODUiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6Imp1bmlvciJ9.z27ZNd1nLw2exgYOlTqDiyptnS4ppGzTqnf7MdlLy-L3LrbbrlILUxIidZAV8_PGZkjWrjmQ3N9S0VwhMOjXECWZEZIV0-nLbPMCd46nZpFGl51YBFX03EVcHnag2Y1dkxwOE3NxDrkwjk7VLzvc1GK4QEW8uYP5KFApdWBGwWuwEEAtLZNmo2-zJbtHXeBVUe1qBKPtE_S5WnKrNBX2oruI2u9OW5EMtngHlx7dfqGJ9ocWkzEDjbxfT5TBcgcPHSW7nUeY2tz0ScrsM-EwisHSOFkFjdbO8honIlpZ8fD_H_kuZHE8vQyieZ0cL7Q16kCPCth3ILV6yR0y3prcoA"
+
+
+You should get a 404 if the token is valid or a 401 if the token is invalid 
+
+
+Response of a Valid Token:
+
+<html>
+<head><title>404 Not Found</title></head>
+<body>
+<center><h1>404 Not Found</h1></center>
+<hr><center>nginx/1.17.9</center>
+</body>
+</html>
+
+
+Response of an Invalid Token:
+
+<html>
+<head><title>401 Authorization Required</title></head>
+<body>
+<center><h1>401 Authorization Required</h1></center>
+<hr><center>nginx/1.17.9</center>
+</body>
+</html>
+
+###################
+
+10. Troubleshooting:
+
+enable debugging by adding the following line to the config under server or location:
+
+    error_log /tmp/jwt-debug debug;
+	
+	
+- then run 
+
+service nginx stop && service nginx-debug start
+
+
+n 
+
+
+
+

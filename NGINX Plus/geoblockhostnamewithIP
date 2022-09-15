@@ -1,0 +1,20 @@
+map $host $deny {
+  hostnames;
+  default 0;
+  test1.rc.com $test1_whitelist;
+  test2.rc.com $test2_whitelist;
+}
+geo $test1_whitelist {
+  172.17.0.0/24 0;
+  default 1;
+}
+geo $test2_whitelist {
+  162.168.1.0 0;
+  172.17.1.1 0;
+  default 1;
+}
+
+server {
+  if ($deny) {
+  return 403 '{"Message":"IP is not whitelisted to access this resource"}';
+  }

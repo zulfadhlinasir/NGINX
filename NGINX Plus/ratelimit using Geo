@@ -1,0 +1,24 @@
+limit_req_zone $geoip_country_code zone=example1.com:10m rate=500r/s;
+limit_req_zone $geoip_country_code zone=example2.com:10m rate=1000r/s;
+ 
+server {
+  server_name example1.com;
+  # only 500r/s from single country
+  limit_req zone=example1.com;
+  ..
+}
+server {
+  server_name example2.com;
+  # only 1000r/s from single country
+  limit_req zone=example2.com;
+  ..
+}
+
+If you would like to exclude some countries, you can use 'map' to set new variable which is empty for whitelisted countries (because an empty key disables limiting), e.g.:
+ 
+map  $geoip_country_code $limited_country {
+  US ""; # always allowed
+  default $geoip_country_code;
+}
+ 
+limit_req_zone $limited_country zone=example.com rate=500r/s;
