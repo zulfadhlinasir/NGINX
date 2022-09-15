@@ -1,0 +1,47 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"k8s.nginx.org/v1","kind":"VirtualServer","metadata":{"annotations":{},"creationTimestamp":"2022-08-03T04:40:38Z","generation":3,"name":"cache","namespace":"default","resourceVersion":"350839","uid":"b85081ab-618c-4bc4-94d2-b1c77d102e91"},"spec":{"host":"cache","http-snippets":"proxy_cache_path /tmp keys_zone=zone_cache:10m;\n","routes":[{"action":{"proxy":{"responseHeaders":{"add":[{"name":"Cache-Control","value":"public, max-age=5"}]},"rewritePath":"/","upstream":"webappcolor-svc"}},"location-snippets":"proxy_cache zone_cache;\nproxy_cache_valid 200 10;\nadd_header X-Cache-Status $upstream_cache_status;\n","path":"/tea"},{"action":{"return":{"body":"uri /test is working!","code":200,"type":"text/plan"}},"path":"/test"}],"server-snippets":"add_header my-test-header tryreturn-value;\n","upstreams":[{"client-max-body-size":"13m","name":"webappcolor-svc","port":8080,"service":"webappcolor-deploy-seattle-cluster-c-93"}]},"status":{"message":"Configuration for default/cache was added or updated ","reason":"AddedOrUpdated","state":"Valid"}}
+  creationTimestamp: "2022-08-03T04:40:38Z"
+  generation: 4
+  name: cache
+  namespace: default
+  resourceVersion: "699047"
+  uid: b85081ab-618c-4bc4-94d2-b1c77d102e91
+spec:
+  host: cache
+  http-snippets: |
+    proxy_cache_path /tmp keys_zone=zone_cache:10m;
+  routes:
+  - action:
+      proxy:
+        responseHeaders:
+          add:
+          - name: Cache-Control
+            value: public, max-age=5
+        rewritePath: /
+        upstream: webappcolor-svc
+    location-snippets: |
+      proxy_cache zone_cache;
+      proxy_cache_valid 200 10;
+      add_header X-Cache-Status $upstream_cache_status;
+    path: /tea
+  - action:
+      return:
+        body: uri /test is working!
+        code: 200
+        type: text/plan
+    path: /test
+  server-snippets: |
+    add_header my-test-header tryreturn-value;
+  upstreams:
+  - client-max-body-size: 13m
+    name: webappcolor-svc
+    port: 8080
+    service: webappcolor-deploy-seattle-cluster-c-93
+status:
+  message: 'Configuration for default/cache was added or updated '
+  reason: AddedOrUpdated
+  state: Valid

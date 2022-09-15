@@ -1,0 +1,56 @@
+apiVersion: v1
+items:
+- apiVersion: networking.k8s.io/v1
+  kind: Ingress
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"nginx.org/location-snippets":"proxy_set_header Host www.google.com;\n","nginx.org/server-snippets":"access_log /var/log/nginx/access.log main;\nerror_log /var/log/nginx/error.log error;\n"},"creationTimestamp":"2022-05-19T12:57:43Z","generation":3,"name":"ingressexternalservice","namespace":"default","resourceVersion":"179444","uid":"02f3a7e3-29f6-401a-a066-50fbf51f50ba"},"spec":{"ingressClassName":"nginx","rules":[{"host":"service.example.com","http":{"paths":[{"backend":{"service":{"name":"external-service-for-ingressexternalservice","port":{"number":80}}},"path":"/","pathType":"Exact"}]}}]},"status":{"loadBalancer":{"ingress":[{}]}}}
+      nginx.org/location-snippets: |
+        proxy_set_header Host www.google.com;
+      nginx.org/server-snippets: |
+        access_log /var/log/nginx/access.log main;
+        error_log /var/log/nginx/error.log error;
+    creationTimestamp: "2022-05-19T12:57:43Z"
+    generation: 3
+    name: ingressexternalservice
+    namespace: default
+    resourceVersion: "179982"
+    uid: 02f3a7e3-29f6-401a-a066-50fbf51f50ba
+  spec:
+    ingressClassName: nginx
+    rules:
+    - host: service.example.com
+      http:
+        paths:
+        - backend:
+            service:
+              name: external-service-for-ingressexternalservice
+              port:
+                number: 80
+          path: /
+          pathType: Exact
+  status:
+    loadBalancer:
+      ingress:
+      - {}
+kind: List
+metadata:
+  resourceVersion: ""
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"creationTimestamp":"2022-05-19T12:56:38Z","name":"external-service-for-ingressexternalservice","namespace":"default","resourceVersion":"44344","uid":"cd081aad-0718-48d5-9da3-a1d0277cd251"},"spec":{"externalName":"www.google.com","sessionAffinity":"None","type":"ExternalName"},"status":{"loadBalancer":{}}}
+  creationTimestamp: "2022-05-19T12:56:38Z"
+  name: external-service-for-ingressexternalservice
+  namespace: default
+  resourceVersion: "45125"
+  uid: cd081aad-0718-48d5-9da3-a1d0277cd251
+spec:
+  externalName: www.google.com
+  sessionAffinity: None
+  type: ExternalName
+status:
+  loadBalancer: {}

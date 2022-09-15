@@ -1,0 +1,46 @@
+admin@seattlek8smaster72:~$ cat vshealthcheck.yaml
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"k8s.nginx.org/v1","kind":"VirtualServer","metadata":{"annotations":{"nginx.org/location-snippets":"access_log off;\nadd_header my-test-header test-value;\n","nginx.org/server-snippets":"location / {\n   return 302 https://www.facebook.com;\n}      \n"},"creationTimestamp":"2022-06-27T01:46:19Z","generation":1,"name":"testcafehealtcheck.example.com","namespace":"default","resourceVersion":"6056872","uid":"7f711076-2a18-4927-aa5b-b3e9826c51f6"},"spec":{"host":"testcafehealtcheck.example.com","routes":[{"action":{"proxy":{"rewritePath":"/","upstream":"tea"}},"location-snippets":"add_header 'Access-Control-Allow-Origin' 'origin.com';\naccess_log off;\n","path":"/tea"}],"upstreams":[{"healthCheck":{"enable":true,"interval":"1s","path":"/healthz"},"name":"tea","port":8080,"service":"my-service-seattle-nginxplus67"}]},"status":{"externalEndpoints":[{"ip":"","ports":""}],"message":"Configuration for default/testcafetest was added or updated ","reason":"AddedOrUpdated","state":"Valid"}}
+    nginx.org/location-snippets: |
+      access_log off;
+      add_header my-test-header test-value;
+    nginx.org/server-snippets: "location / {\n   return 302 https://www.facebook.com;\n}
+      \     \n"
+  creationTimestamp: "2022-06-28T03:04:26Z"
+  generation: 1
+  name: testcafehealtcheck.example.com
+  namespace: default
+  resourceVersion: "6223148"
+  uid: e21b149d-a93b-4c0f-ba60-e3e30e0de91c
+spec:
+  host: testcafehealtcheck.example.com
+  routes:
+  - action:
+      proxy:
+        rewritePath: /
+        upstream: tea
+    location-snippets: |
+      add_header 'Access-Control-Allow-Origin' 'origin.com';
+      access_log off;
+    path: /tea
+  upstreams:
+  - healthCheck:
+      enable: true
+      interval: 1s
+      path: /healthz
+    name: tea
+    port: 8080
+    service: my-service-seattle-nginxplus67
+status:
+  externalEndpoints:
+  - ip: ""
+    ports: ""
+  message: 'Configuration for default/testcafehealtcheck.example.com was added or
+    updated '
+  reason: AddedOrUpdated
+  state: Valid
+admin@seattlek8smaster72:~$

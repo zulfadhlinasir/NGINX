@@ -1,0 +1,41 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"k8s.nginx.org/v1","kind":"VirtualServer","metadata":{"annotations":{"nginx.org/location-snippets":"access_log off;\nadd_header my-test-header test-value;\n","nginx.org/server-snippets":"location / {\n   return 302 https://www.facebook.com;\n}      \n"},"creationTimestamp":"2022-06-14T01:48:56Z","generation":2,"name":"cafetest-2","namespace":"default","resourceVersion":"4006702","uid":"a509f08a-86d7-4549-b6fc-b3a0526f4d8f"},"spec":{"host":"cafetest-2.example.com","routes":[{"action":{"proxy":{"rewritePath":"/","upstream":"tea"}},"location-snippets":"add_header 'Access-Control-Allow-Origin' 'origin.com';\naccess_log off;\n","path":"/tea"}],"upstreams":[{"name":"tea","port":8080,"service":"webappcolor-deploy-seattle-cluster-b-72"}]},"status":{"externalEndpoints":[{"ip":"","ports":""}],"message":"Configuration for default/cafetest was added or updated ","reason":"AddedOrUpdated","state":"Valid"}}
+    nginx.org/location-snippets: |
+      access_log off;
+      add_header my-test-header test-value;
+    nginx.org/server-snippets: "location / {\n   return 302 https://www.facebook.com;\n}
+      \     \n"
+  creationTimestamp: "2022-06-23T00:15:49Z"
+  generation: 1
+  name: cafetest-2
+  namespace: default
+  resourceVersion: "5415508"
+  uid: c1301f3b-a1ba-4b11-a742-5fe5c8a06fd9
+spec:
+  host: cafetest-2.example.com
+  routes:
+  - action:
+      proxy:
+        rewritePath: /
+        upstream: tea
+    location-snippets: |
+      add_header 'Access-Control-Allow-Origin' 'origin.com';
+      access_log off;
+    path: /tea
+  server-snippets: |
+    add_header my-test-header test-value;
+  upstreams:
+  - name: tea
+    port: 8080
+    service: webappcolor-deploy-seattle-cluster-b-72
+status:
+  externalEndpoints:
+  - ip: ""
+    ports: ""
+  message: 'Configuration for default/cafetest-2 was added or updated '
+  reason: AddedOrUpdated
+  state: Valid

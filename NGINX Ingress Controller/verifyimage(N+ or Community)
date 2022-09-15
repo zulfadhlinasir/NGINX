@@ -1,0 +1,34 @@
+Hi Team,
+ 
+If you remember we sort of having this question – “How to know user is pulling/building which Ingress Controller image??
+ 
+Option A
+Run nginx -v, if they are using NGINX Plus, the value would be similar with - nginx version: nginx/1.21.3 (nginx-plus-r25-p1). If they are using OSS, they would not have the r value
+admin@00028223ingresscontroller-ubuntu-server1:~$ kubectl exec -n ingress-nginx ingress-nginx-controller-6bf7bc7f94-gsgnt -ti -- nginx -nginx version: nginx/1.19.10
+ 
+Option B, saw this in Slack conversation. On the other hand, apparently building the image in Mac require another argument
+Inspect Docker image, for example both image below are built based on Building the Ingress Controller Image | NGINX Ingress Controller. Note the differences between those 2 bolded lines
+NGINX Plus
+NGINX
+admin@00028223ingresscontroller-ubuntu-server1:~$ docker inspect --format '{{json .Config.Labels}}' b61646fa23c5 | jq
+{
+  "org.nginx.kic.image.build.nginx.version": "r26",
+  "org.nginx.kic.image.build.os": "debian-plus",
+  "org.nginx.kic.image.build.target": "linux/amd64",
+  "org.nginx.kic.image.build.version": "binaries",
+  "org.opencontainers.image.created": "2022-06-24T02:57:10Z",
+  "org.opencontainers.image.revision": "a88b7fe6dbde5df79593ac161749afc1e9a009c6",
+  "org.opencontainers.image.version": "v2.2.2-SNAPSHOT-a88b7fe"
+}
+admin@00028223ingresscontroller-ubuntu-server1:~/temp_CANDELETE/kubernetes-ingress$ docker inspect --format '{{ json .Config.Labels }}' 207acaeaad44  | jq
+{
+  "maintainer": "NGINX Docker Maintainers <docker-maint@nginx.com>",
+  "org.nginx.kic.image.build.nginx.version": "1.23.0",
+  "org.nginx.kic.image.build.os": "debian",
+  "org.nginx.kic.image.build.target": "linux/amd64",
+  "org.nginx.kic.image.build.version": "binaries",
+  "org.opencontainers.image.revision": "979db22d8065b22fedb410c9b9c5875cf0a6dc66",
+  "org.opencontainers.image.version": "v2.3.0-SNAPSHOT-979db22"
+}
+
+Hope this helps!

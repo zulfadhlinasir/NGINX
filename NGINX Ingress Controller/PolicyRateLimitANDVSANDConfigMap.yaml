@@ -1,0 +1,96 @@
+#Rate Limit Policy
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"k8s.nginx.org/v1","kind":"Policy","metadata":{"annotations":{},"creationTimestamp":"2022-07-06T12:25:45Z","generation":4,"name":"policy-rate-limit","namespace":"default","resourceVersion":"1428640","uid":"11d48031-c461-44bd-97c5-d7841a9187a9"},"spec":{"rateLimit":{"key":"${uri}","rate":"1r/s","rejectCode":404,"zoneSize":"10M"}},"status":{"message":"Policy default/policy-rate-limit is invalid and was rejected: spec.rateLimit.key: Invalid value: \"url\": 'url' contains an invalid NGINX variable. Accepted variables are: binary_remote_addr, request_uri, uri, args","reason":"Rejected","state":"Invalid"}}
+  creationTimestamp: "2022-07-06T12:25:45Z"
+  generation: 5
+  name: policy-rate-limit
+  namespace: default
+  resourceVersion: "1428746"
+  uid: 11d48031-c461-44bd-97c5-d7841a9187a9
+spec:
+  rateLimit:
+    key: ${uri}
+    rate: 1r/s
+    rejectCode: 404
+    zoneSize: 10M
+status:
+  message: Policy default/policy-rate-limit was added or updated
+  reason: AddedOrUpdated
+  state: Valid
+---
+#VS
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"k8s.nginx.org/v1","kind":"VirtualServer","metadata":{"annotations":{"nginx.org/location-snippets":"access_log off;\nadd_header my-test-header test-value;\n","nginx.org/server-snippets":"location / {\n   return 302 https://www.facebook.com;\n}      \n"},"creationTimestamp":"2022-07-04T03:09:32Z","generation":4,"name":"cafetest-2","namespace":"default","resourceVersion":"1429081","uid":"895e0255-e653-4bfd-a8c4-ef99050113bf"},"spec":{"host":"returnandsvc.example.com","policies":[{"name":"policy-rate-limit"}],"routes":[{"action":{"return":{"body":"TEST NOT SUCCESSFUL\n","code":200,"type":"text/plain"}},"location-snippets":"add_header 'Access-Control-Allow-Origin' 'origin.com';\naccess_log /var/log/nginx/access.log main;\n","path":"/tea"},{"action":{"proxy":{"rewritePath":"/","upstream":"upstreamname"}},"path":"/test"}],"server-snippets":"access_log /var/log/nginx/access.log main;","upstreams":[{"name":"upstreamname","port":8080,"service":"webappcolor-deploy-seattle-cluster-b-125"}]},"status":{"externalEndpoints":[{"ip":"","ports":""}],"message":"Configuration for default/cafetest-2 was added or updated ","reason":"AddedOrUpdated","state":"Valid"}}
+    nginx.org/location-snippets: |
+      access_log off;
+      add_header my-test-header test-value;
+    nginx.org/server-snippets: "location / {\n   return 302 https://www.facebook.com;\n}
+      \     \n"
+  creationTimestamp: "2022-07-04T03:09:32Z"
+  generation: 5
+  name: cafetest-2
+  namespace: default
+  resourceVersion: "1429274"
+  uid: 895e0255-e653-4bfd-a8c4-ef99050113bf
+spec:
+  host: returnandsvc.example.com
+  policies:
+  - name: policy-rate-limit
+  routes:
+  - action:
+      return:
+        body: |
+          TEST NOT SUCCESSFUL
+        code: 200
+        type: text/plain
+    location-snippets: |
+      add_header 'Access-Control-Allow-Origin' 'origin.com';
+      access_log /var/log/nginx/access.log main;
+    path: /tea
+  - action:
+      proxy:
+        rewritePath: /
+        upstream: upstreamname
+    path: /test
+  server-snippets: access_log /var/log/nginx/access.log main;
+  upstreams:
+  - name: upstreamname
+    port: 8080
+    service: webappcolor-deploy-seattle-cluster-b-125
+status:
+  externalEndpoints:
+  - ip: ""
+    ports: ""
+  message: 'Configuration for default/cafetest-2 was added or updated '
+  reason: AddedOrUpdated
+  state: Valid
+---
+#configmap
+apiVersion: v1
+data:
+  error-log-level: info
+  log-format: '[$time_local] - $remote_addr \n"$request" \n"host: $http_host" \n"content-length:
+    $http_content_length" \n"expect: $http_expect" \n"accept: $http_accept" \n"token:
+    $http_token" \n"authorization: $http_authorization" \n"NIC Resource: $resource_name"
+    \n"HTTP Response: $status" \n $upstream_status"==========================================="
+    -"$uri" - "$request_uri"'
+  resolver-addresses: 8.8.8.8
+  upstream-zone-size: 1024k
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"error-log-level":"info","log-format":"[$time_local] - $remote_addr \\n\"$request\" \\n\"host: $http_host\" \\n\"content-length: $http_content_length\" \\n\"expect: $http_expect\" \\n\"accept: $http_accept\" \\n\"token: $http_token\" \\n\"authorization: $http_authorization\" \\n\"NIC Resource: $resource_name\" \\n\"HTTP Response: $status\" \\n $upstream_status\"===========================================\" -\"$uri\" - \"$request_uri\"","resolver-addresses":"8.8.8.8","upstream-zone-size":"1024k"},"kind":"ConfigMap","metadata":{"annotations":{},"creationTimestamp":"2022-07-04T05:04:03Z","name":"nginx-config-upgraded","namespace":"nginx-ingress","resourceVersion":"1427309","uid":"4553aaea-dc92-4152-80f6-d348f731a1c2"}}
+  creationTimestamp: "2022-07-04T05:04:03Z"
+  name: nginx-config-upgraded
+  namespace: nginx-ingress
+  resourceVersion: "1428926"
+  uid: 4553aaea-dc92-4152-80f6-d348f731a1c2

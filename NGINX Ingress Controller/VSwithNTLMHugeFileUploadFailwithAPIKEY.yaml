@@ -1,0 +1,92 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  annotations:
+    nginx.org/location-snippets: |
+      access_log off;
+      add_header my-test-header test-value;
+    nginx.org/server-snippets: "location / {\n   return 302 https://www.facebook.com;\n}
+      \     \n"
+  creationTimestamp: "2022-07-14T07:59:33Z"
+  generation: 1
+  name: cafetest-2
+  namespace: default
+  resourceVersion: "1815484"
+  uid: 9c45e091-4523-41d3-a5e1-1dba21ae7d15
+spec:
+  host: returnandsvc.example.com
+  http-snippets: |
+    map $http_authorization $discardbody {
+    default 0;
+    "~NTLM .{1,64}$" 1;
+    "~Negotiate .{1,64}$" 1; #Check header
+    }
+    map $http_apikey $api_key_name {
+    default "";
+
+    "nny6NqCmvgVdAXKfEm2XhNhqlfhsUJKUTxwfsfssxnKRTdAInX0TLNNKhv8HNfn0wJuv" "key_one";
+    "sGemnyRwTPjP7zMav7kLjjUSW4fe6Jy24LGcgPTrussfseW4ME1Lg8saIVC07qzY4SBP" "key_two";
+    "oCcuSIRzwQLW7bAkd74aD1OHiUwiopeahhzB6yqfsfsPxhpxE9DWQxYgPznHTwAdUQGw" "key_three";
+    "A1CgrBQjTm4v5LJ4uiFM5GbzA3tlq8W7npnxFnZFfdLIZsgsgsx9j6d7v4ybA2VVck5FA" "key_four";
+    "b0hQZcFIxdmzvS0rfYVUKqa5kqssDZyWGFVJihLzYdLYzigsgsgdUSOfUkht3gkAzjQ16" "key_five";
+    }
+  policies:
+  - name: policy-rate-limit
+  routes:
+  - action:
+      return:
+        body: |
+          TEST NOT SUCCESSFUL
+        code: 200
+        type: text/plain
+    location-snippets: |
+      add_header 'Access-Control-Allow-Origin' 'origin.com';
+      access_log /var/log/nginx/access.log main;
+    path: /tea
+  - action:
+      proxy:
+        rewritePath: /
+        upstream: upstreamname
+    location-snippets: |
+      auth_request /_validate_apikey;
+    path: /test
+  - action:
+      proxy:
+        requestHeaders:
+          pass: true
+          set:
+          - name: Content-Length
+            value: "0"
+        rewritePath: /
+        upstream: upstreamname
+    location-snippets: |
+      internal;
+      proxy_set_body "";
+    path: /discardbody
+  server-snippets: |
+    if ( $discardbody ) {
+     rewrite (.*) /discardbody$1;
+    }
+    # API key validation
+    location = /_validate_apikey {
+        internal;
+
+        if ($http_apikey = "") {
+            return 401; # Unauthorized
+        }
+        if ($api_key_name = "") {
+            return 403; # Forbidden
+        }
+        return 204; # OK (no content)
+    }
+  upstreams:
+  - name: upstreamname
+    port: 8080
+    service: webappcolor-deploy-seattle-cluster-b-125
+status:
+  externalEndpoints:
+  - ip: ""
+    ports: ""
+  message: 'Configuration for default/cafetest-2 was added or updated '
+  reason: AddedOrUpdated
+  state: Valid

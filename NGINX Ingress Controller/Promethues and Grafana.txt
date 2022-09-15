@@ -1,0 +1,46 @@
+With this method, we are using Docker to deploy Prometheus, and K8s to deploy Grafana
+
+
+
+NIC
+
+In NIC Deployment, Command line argument ( to verify NIC is listening it you can curl http://NICIP:9113/metrics)
+           - -enable-prometheus-metrics=true
+
+          - -prometheus-metrics-listen-port=9113
+
+In NIC Deployment, place these Annotation
+        annotations:
+
+           prometheus.io/port: "9113"
+
+           prometheus.io/scheme: http
+
+           prometheus.io/scrape: "true"
+
+
+
+Prometheus
+
+Create /tmp/prometheus.yml prometheus.yaml  --- notice in the last line I added the NIC pod socket
+DOCKER SWARM METHOD or,,,
+docker swarm init --advertise-addr=10.112.73.193 --default-addr-pool=15.135.0.0/16 – enable Docker swarm so that we can deploy Docker service, please modifly --default--addr-pool to use non mgmt IP so that it wont mess with your mgmt IP routing
+docker service create --replicas 1 --name my-prometheus     --mount type=bind,source=/tmp/prometheus.yml,destination=/etc/prometheus/prometheus.yml     --publish published=9090,target=9090,protocol=tcp     prom/prometheus
+docker service ls -- to verify the service is creates
+NORMAL DOCKER
+docker run -p 9090:9090 -d --name promethues --mount type=bind,source=/tmp/prometheus.yml,target=/etc/prometheus/prometheus.yml prom/prometheus
+To verify Prometheus able to reach NIC
+curl http://<prometheusIP>:9090/api/v1/targets --API method
+browse Prometheus UI Status>Target and verify NIC is up. Example https://imagebin.es.f5net.com/uploads/H2yTI5.png, notice 2 NIC detected up
+
+
+Grafana
+
+grafana-deployment.yaml, and expose it through service
+Import Prometheus
+Setting>DataSource>Prometheus>HTTP>URL,  place Prometheus container Socket
+Create Dashboard nginx-prometheus-exporter/grafana at main · nginxinc/nginx-prometheus-exporter (github.com)
+Use the New Dashboard button and click Import.
+Upload dashboard.json or copy and paste the contents of the file in the textbox and click Load.
+Set the Prometheus data source and click Import.
+The dashboard will appear - for example - - https://imagebin.es.f5net.com/uploads/R7dNWE.png

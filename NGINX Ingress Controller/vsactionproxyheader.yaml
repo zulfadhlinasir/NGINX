@@ -1,0 +1,50 @@
+admin@seattlek8smaster72:~$ kubectl get vs cafetest-proxyheader -o yaml
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"k8s.nginx.org/v1","kind":"VirtualServer","metadata":{"annotations":{"nginx.org/location-snippets":"access_log off;\nadd_header my-test-header test-value;\n","nginx.org/server-snippets":"location / {\n   return 302 https://www.facebook.com;\n}      \n"},"creationTimestamp":"2022-06-23T00:19:18Z","generation":1,"name":"cafetest-proxyheader","namespace":"default","resourceVersion":"5415892","uid":"707bb19e-68e7-4a84-9a9a-844799034f4e"},"spec":{"host":"cafetest-proxyheader.example.com","routes":[{"action":{"proxy":{"requestHeaders":{"pass":true,"set":[{"name":"vsactionproxyheader1","value":"number1"},{"name":"vsactionproxyheader2","value":"number2"}]},"rewritePath":"/","upstream":"tea"}},"location-snippets":"add_header 'Access-Control-Allow-Origin' 'origin.com';\naccess_log off;\n","path":"/tea"}],"server-snippets":"add_header my-test-header test-value;\n","upstreams":[{"name":"tea","port":8080,"service":"my-service-seattle-nginxplus67"}]},"status":{"externalEndpoints":[{"ip":"","ports":""}],"message":"Configuration for default/cafetest-2 was added or updated ","reason":"AddedOrUpdated","state":"Valid"}}
+    nginx.org/location-snippets: |
+      access_log off;
+      add_header my-test-header test-value;
+    nginx.org/server-snippets: "location / {\n   return 302 https://www.facebook.com;\n}
+      \     \n"
+  creationTimestamp: "2022-06-28T03:13:50Z"
+  generation: 1
+  name: cafetest-proxyheader
+  namespace: default
+  resourceVersion: "6224181"
+  uid: 6562a9d7-a9f1-4f0e-8dca-b44449550fbf
+spec:
+  host: cafetest-proxyheader.example.com
+  routes:
+  - action:
+      proxy:
+        requestHeaders:
+          pass: true
+          set:
+          - name: vsactionproxyheader1
+            value: number1
+          - name: vsactionproxyheader2
+            value: number2
+        rewritePath: /
+        upstream: tea
+    location-snippets: |
+      add_header 'Access-Control-Allow-Origin' 'origin.com';
+      access_log off;
+    path: /tea
+  server-snippets: |
+    add_header my-test-header test-value;
+  upstreams:
+  - name: tea
+    port: 8080
+    service: my-service-seattle-nginxplus67
+status:
+  externalEndpoints:
+  - ip: ""
+    ports: ""
+  message: 'Configuration for default/cafetest-proxyheader was added or updated '
+  reason: AddedOrUpdated
+  state: Valid
+admin@seattlek8smaster72:~$

@@ -1,0 +1,151 @@
+Install Helm first 
+-- First, install helm if you don't already have it
+
+# install helm command:
+
+curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+# Check helm version after install:
+
+sudo helm version --short
+
+
+-- create a separate namespace for your monitoring pods (prometheus and grafana) to reside install:
+
+kubectl create namespace monitoring
+Install Prometheus using helm
+
+-- add the repos:
+
+sudo helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+sudo helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
+sudo helm repo update
+
+-- run the install:
+
+sudo helm install nginx-prometheus prometheus-community/prometheus -n monitoring
+Note: If you receive the error 'Error: INSTALLATION FAILED: Kubernetes cluster unreachable: Get "http://localhost:8080/version": dial tcp 127.0.0.1:8080: connect: connection refused' change command to 
+sudo helm install nginx-prometheus prometheus-community/prometheus -n monitoring --kubeconfig ~/.kube/config
+
+Install grafana using helm
+
+-- add the repos:
+
+sudo helm repo add grafana https://grafana.github.io/helm-charts
+
+-- run the install:
+
+sudo helm install nginx-grafana grafana/grafana -n monitoring
+
+-- can check the status of your helm installations with:
+
+sudo helm ls -A
+
+
+
+
+
+
+
+Make sure N+ IC is configured properly for prometheus stats
+
+1. Verify or add the following Prometheus "Annotations" to Nginx+ Ingress Controller deployment manifest:
+
+annotations:
+prometheus.io/scrape: "true"
+prometheus.io/port: "9113"
+ # You can use "kubectl edit deployment nginx-ingress n nginx-ingress" to review/edit the manifest file for the N+ IC deployment. Standard vi editor commands are used once you enter the editor.
+
+
+
+
+2. Review the N+ Ingress Controller manifest to verify port "9113" is open. If not, add the following lines to the manifest, under the "ports: " section 
+
+- name: prometheus
+containerPort: 9113
+
+
+3. Lastly, while you are checking over the N+ IC deployment manifest, make sure the command line arg "- -enable-prometheus-metrics" is enabled
+
+
+
+Removing PersistentVolumeClaim references
+
+At this point, if you are not using Persistent Volumes in your cluster, you might notice some of the prometheus pods are in a failed state. The helm deployment assumes your K8s cluster has Persistent Volumes(PV) configured already, and some of the pods are looking for the PV that the Persistent Volume Claim (PVC) can mount to. In my lab, I'm not concerned with maintaining the data after the pods restart, so the following steps just explain how to remove the PVC from the deployments.
+
+-- edit "nginx-prometheus-alertmanager" and "nginx-prometheus-server" deployments
+
+kubectl edit deployment nginx-prometheus-alertmanager -n monitoring
+
+# you should see some mention of "volumes" and a "persistentVolumeClaim" sort of like the following:
+
+volumes:
+- name: prometheus-pv
+  persistentVolumeClaim:
+    claimName: prometheus-pvc
+
+
+# to eliminate the PVC section, just change "persistentVolumeClaim:" to "emptyDir: {}" and remove the "claimName" config below it.
+# The volume section of the deployment should look something like the following:
+
+volumes:
+- configMap:
+    defaultMode: 420
+    name: nginx-prometheus-server
+  name: config-volume
+- emptyDir: {}
+  name: storage-volume
+
+# You do this for the "nginx-prometheus-server" deployment, and the grafane deployment as well.
+# After these edits, you should see all the pods running successfully.
+
+
+
+Applying a VS resource to expose the prometheus and grafana applications outside the cluster
+
+now that all the prometheus and grafana pods are running successfully, we'll need to deploy a VS resource to access the apps from outside the cluster.
+
+- virtualserver for Grafana:
+
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: grafana-vs
+  namespace: monitoring
+spec:
+  host: grafana.example.com
+  upstreams:
+  - name: grafana 
+    service: nginx-grafana
+    port: 80
+  routes:
+  - path: / 
+    action:
+      pass: grafana
+ *You will be able to access the app now at http://grafana.example.com 
+
+ *As long as you have you local hosts file or DNS pointing to the Ingress Controller IP for this FQDN
+
+
+
+- virtualserver for prometheus:
+
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: prometheus-vs 
+  namespace: monitoring
+spec:
+  host: prometheus.example.com
+  upstreams:
+  - name: prometheus 
+    service: nginx-prometheus-server
+    port: 80 
+  routes:
+  - path: /
+    action:
+      pass: prometheus
+ *You will be able to access the app now at http://prometheus.example.com 
+
+ *As long as you have you local hosts file or DNS pointing to the Ingress Controller IP for this FQDN
+

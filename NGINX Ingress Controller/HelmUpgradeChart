@@ -1,0 +1,137 @@
+
+Save New Duplicate & Edit Just Text Twitter
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ git checkout v2.1.2
+Previous HEAD position was 979db22d Update images versions (#2838)
+HEAD is now at 1ee492af Release 2.1.2
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ git pull origin v2.1.2
+From https://github.com/nginxinc/kubernetes-ingress
+ * tag                 v2.1.2     -> FETCH_HEAD
+Already up to date.
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ cat Chart.yaml
+name: nginx-ingress
+version: 0.12.2
+appVersion: 2.1.2
+apiVersion: v1
+kubeVersion: ">= 1.19.0-0"
+description: NGINX Ingress Controller
+icon: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.1.2/deployments/helm-chart/chart-icon.png
+home: https://github.com/nginxinc/kubernetes-ingress
+sources:
+  - https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.2/deployments/helm-chart
+keywords:
+  - ingress
+  - nginx
+maintainers:
+  - name: nginxinc
+    email: kubernetes@nginx.com
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ helm list
+NAME	NAMESPACE	REVISION	UPDATED	STATUS	CHART	APP VERSION
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ helm install my-release \
+> --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress \
+> --set controller.image.tag=2.1.2 \
+> --set controller.nginxplus=true \
+> --set controller.serviceAccount.imagePullSecretName=regcred .^C
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ ^C
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ ^C
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ ^C
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ ^C
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ ^C
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ ^C
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ helm install my-release \
+> --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress \
+> --set controller.image.tag=2.1.2 \
+> --set controller.nginxplus=true \
+> --set controller.serviceAccount.imagePullSecretName=regcred .
+
+NAME: my-release
+LAST DEPLOYED: Fri Jul 29 09:01:27 2022
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+The NGINX Ingress Controller has been installed.
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ helm list
+NAME      	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART               	APP VERSION
+my-release	default  	1       	2022-07-29 09:01:27.433134079 +0000 UTC	deployed	nginx-ingress-0.12.2	2.1.2
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ kbuectl get^C
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ ^C
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ kubectl get pods
+NAME                                        READY   STATUS    RESTARTS   AGE
+busybox                                     1/1     Running   0          6h34m
+my-release-nginx-ingress-7b7759cc54-5v44n   1/1     Running   0          18s
+nginx                                       1/1     Running   0          6h37m
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ kubectl exec my-release-nginx-ingress-7b7759cc54-5v44n -ti -- nginx -v
+nginx version: nginx/1.21.5 (nginx-plus-r26)
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ git checkout v2.3.0
+Previous HEAD position was 1ee492af Release 2.1.2
+HEAD is now at 979db22d Update images versions (#2838)
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ git pull origin v2.3.0
+From https://github.com/nginxinc/kubernetes-ingress
+ * tag                 v2.3.0     -> FETCH_HEAD
+Already up to date.
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ cat Chart.yaml
+name: nginx-ingress
+version: 0.14.0
+appVersion: 2.3.0
+apiVersion: v1
+kubeVersion: ">= 1.19.0-0"
+description: NGINX Ingress Controller
+icon: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/deployments/helm-chart/chart-icon.png
+home: https://github.com/nginxinc/kubernetes-ingress
+sources:
+  - https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/deployments/helm-chart
+keywords:
+  - ingress
+  - nginx
+maintainers:
+  - name: nginxinc
+    email: kubernetes@nginx.com
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ helm upgrade my-release \
+> --set controller.image.repository=private-registry.nginx.com/nginx-ic/nginx-plus-ingress \
+> --set controller.image.tag=2.3.0 \
+> --set controller.nginxplus=true \
+> --set controller.serviceAccount.imagePullSecretName=regcred .
+helm lisRelease "my-release" has been upgraded. Happy Helming!
+NAME: my-release
+LAST DEPLOYED: Fri Jul 29 09:03:01 2022
+NAMESPACE: default
+STATUS: deployed
+REVISION: 2
+TEST SUITE: None
+NOTES:
+The NGINX Ingress Controller has been installed.
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ helm list
+NAME      	NAMESPACE	REVISION	UPDATED                                	STATUS  	CHART               	APP VERSION
+my-release	default  	2       	2022-07-29 09:03:01.847221463 +0000 UTC	deployed	nginx-ingress-0.14.0	2.3.0
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ kubectl get pods
+NAME                                        READY   STATUS    RESTARTS   AGE
+busybox                                     1/1     Running   0          6h36m
+my-release-nginx-ingress-76b549468b-f59qw   1/1     Running   0          6s
+nginx                                       1/1     Running   0          6h38m
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$ kubectl exec my-release-nginx-ingress-76b549468b-f59qw -ti -- nginx -v
+nginx version: nginx/1.21.6 (nginx-plus-r27)
+admin@00030847helm-ubuntu-server:~/github/helm/kubernetes-ingress/deployments/helm-chart$
+
+
+##################################
+
+
+Example of upgrading Helm Chart
+- git checkout <NIC version AKA branch name>
+- git pull origin <NIC version AKA branch name>
+-cat deployments/helm-chart/Chart.yaml 
+-make sure the versions are correct
+-helm upgrade <your release> along with the configuration you intended . if its successful, similar message like below:=-
+   Release "my-release" has been upgraded. Happy Helming!
+-helm list
+NAME: my-release
+LAST DEPLOYED: Fri Jul 29 09:03:01 2022
+NAMESPACE: default
+STATUS: deployed
+REVISION: 2
+TEST SUITE: None
+NOTES:
+The NGINX Ingress Controller has been installed.
+-Helm list will show you the relevant information eg Revision, Status, Chart Version, App Version

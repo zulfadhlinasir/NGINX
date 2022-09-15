@@ -1,0 +1,97 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: GlobalConfiguration
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"k8s.nginx.org/v1alpha1","kind":"GlobalConfiguration","metadata":{"annotations":{"meta.helm.sh/release-name":"my-release","meta.helm.sh/release-namespace":"default"},"creationTimestamp":"2022-08-05T11:56:07Z","generation":1,"labels":{"app.kubernetes.io/instance":"my-release","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"my-release-nginx-ingress","helm.sh/chart":"nginx-ingress-0.14.0"},"name":"my-release-nginx-ingress","namespace":"default","resourceVersion":"348226","uid":"f0c4327a-d5bd-484f-a35c-db57b4edb304"},"spec":{"listeners":[{"name":"ssh-tcp","port":1023,"protocol":"TCP"}]}}
+    meta.helm.sh/release-name: my-release
+    meta.helm.sh/release-namespace: default
+  creationTimestamp: "2022-08-05T11:56:07Z"
+  generation: 2
+  labels:
+    app.kubernetes.io/instance: my-release
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: my-release-nginx-ingress
+    helm.sh/chart: nginx-ingress-0.14.0
+  name: my-release-nginx-ingress
+  namespace: default
+  resourceVersion: "446140"
+  uid: f0c4327a-d5bd-484f-a35c-db57b4edb304
+spec:
+  listeners:
+  - name: ssh-tcp
+    port: 1023
+    protocol: TCP
+---
+piVersion: k8s.nginx.org/v1alpha1
+kind: TransportServer
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"k8s.nginx.org/v1alpha1","kind":"TransportServer","metadata":{"annotations":{},"name":"transport-server-ssh-tcp","namespace":"default"},"spec":{"action":{"pass":"upstream-name-ss-tcp"},"listener":{"name":"ssh-tcp","protocol":"TCP"},"upstreams":[{"name":"upstream-name-ss-tcp","port":1022,"service":"svc-tcp-67-22"}]}}
+  creationTimestamp: "2022-08-08T06:19:41Z"
+  generation: 1
+  name: transport-server-ssh-tcp
+  namespace: default
+  resourceVersion: "446492"
+  uid: a9b50220-c86d-4f87-b3f5-6f09d8a0d015
+spec:
+  action:
+    pass: upstream-name-ss-tcp
+  listener:
+    name: ssh-tcp
+    protocol: TCP
+  upstreams:
+  - name: upstream-name-ss-tcp
+    port: 1022
+    service: svc-tcp-67-22
+status:
+  message: 'Configuration for default/transport-server-ssh-tcp was added or updated '
+  reason: AddedOrUpdated
+  state: Valid
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"creationTimestamp":"2022-08-08T06:12:57Z","name":"svc-tcp-67-22","namespace":"default","resourceVersion":"445943","uid":"6fa658b8-7b6d-4254-80a0-3a30673b72bd"},"spec":{"clusterIP":"10.108.251.56","clusterIPs":["10.108.251.56"],"internalTrafficPolicy":"Cluster","ipFamilies":["IPv4"],"ipFamilyPolicy":"SingleStack","ports":[{"port":1024,"protocol":"TCP","targetPort":22}],"sessionAffinity":"None","type":"ClusterIP"},"status":{"loadBalancer":{}}}
+  creationTimestamp: "2022-08-08T06:12:57Z"
+  name: svc-tcp-67-22
+  namespace: default
+  resourceVersion: "446622"
+  uid: 6fa658b8-7b6d-4254-80a0-3a30673b72bd
+spec:
+  clusterIP: 10.108.251.56
+  clusterIPs:
+  - 10.108.251.56
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 1024
+    protocol: TCP
+    targetPort: 22
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Endpoints","metadata":{"annotations":{},"name":"svc-tcp-67-22","namespace":"default"},"subsets":[{"addresses":[{"ip":"10.155.231.67"}],"ports":[{"port":22}]}]}
+  creationTimestamp: "2022-08-08T06:12:57Z"
+  name: svc-tcp-67-22
+  namespace: default
+  resourceVersion: "445944"
+  uid: fe574f9b-4da3-4cbb-af2d-a793d2a21495
+subsets:
+- addresses:
+  - ip: 10.155.231.67 #SSH Server
+  ports:
+  - port: 22
+    protocol: TCP

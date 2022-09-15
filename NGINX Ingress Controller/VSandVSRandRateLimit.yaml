@@ -1,0 +1,78 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: vsroutemaster
+spec:
+  host: vsroute
+  routes:
+  - path: /vsrminionuri
+    route: dig/vsrouteminion
+---
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: vsrouteminion
+  namespace: dig
+spec:
+  host: vsroute
+  upstreams:
+  - name: my-service
+    service: my-service
+    port: 443
+    tls:
+      enable: true
+  subroutes:
+  - path: /vsrminionuri/uri
+    policies:
+    - name: policy-rate-limit-a
+      namespace: default
+    action:
+      proxy:
+        requestHeaders:
+          pass: true
+          set:
+          - name: Host
+            value: zombo.com
+        rewritePath: /
+        upstream: my-service
+  - path: /vsrminionuri/ura
+    policies:
+    - name: policy-rate-limit-b
+      namespace: default
+    action:
+      proxy:
+        requestHeaders:
+          pass: true
+          set:
+          - name: Host
+            value: zombo.com
+        rewritePath: /
+        upstream: my-service
+---
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  generation: 5
+  name: policy-rate-limit-a
+  resourceVersion: "1428746"
+  uid: 11d48031-c461-44bd-97c5-d7841a9187a9
+spec:
+  rateLimit:
+    key: ${uri}
+    rate: 1r/s
+    rejectCode: 404
+    zoneSize: 10M
+---
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  generation: 5
+  name: policy-rate-limit-b
+  resourceVersion: "1428746"
+  uid: 11d48031-c461-44bd-97c5-d7841a9187a9
+spec:
+  rateLimit:
+    key: ${uri}
+    rate: 12r/s
+    rejectCode: 404
+    zoneSize: 10M

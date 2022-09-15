@@ -1,0 +1,87 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"nginx.ingress.kubernetes.io/whitelist-source-range":"10.0.0.0/24,172.10.0.1","nginx.org/location-snippets":"proxy_set_header Host www.google.com;\n","nginx.org/server-snippets":"access_log /var/log/nginx/access.log main;\nerror_log /var/log/nginx/error.log error;\n","nginx.org/upstream-zone-size":"1024k"},"creationTimestamp":"2022-06-01T01:47:45Z","generation":1,"name":"ingress-with-externalname-svc","namespace":"default","resourceVersion":"7174085","uid":"a60ff332-cafc-4341-aa61-4673042c2b86"},"spec":{"ingressClassName":"nginx","rules":[{"host":"service.example.com","http":{"paths":[{"backend":{"service":{"name":"external-service-for-ingressexternalservice","port":{"number":80}}},"path":"/","pathType":"Exact"}]}}]},"status":{"loadBalancer":{}}}
+    nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/24,172.10.0.1
+    nginx.org/location-snippets: |
+      proxy_set_header Host www.google.com;
+    nginx.org/server-snippets: |
+      access_log /var/log/nginx/access.log main;
+      error_log /var/log/nginx/error.log error;
+    nginx.org/upstream-zone-size: 1024k
+  creationTimestamp: "2022-06-01T01:47:45Z"
+  generation: 1
+  name: ingress-with-externalname-svc
+  namespace: default
+  resourceVersion: "9813182"
+  uid: a60ff332-cafc-4341-aa61-4673042c2b86
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: service.example.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: external-service-for-ingressexternalservice
+            port:
+              number: 80
+        path: /
+        pathType: Exact
+status:
+  loadBalancer:
+    ingress:
+    - {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"creationTimestamp":"2022-05-19T12:56:38Z","name":"external-service-for-ingressexternalservice","namespace":"default","resourceVersion":"45125","uid":"cd081aad-0718-48d5-9da3-a1d0277cd251"},"spec":{"externalName":"www.google.com","sessionAffinity":"None","type":"ExternalName"},"status":{"loadBalancer":{}}}
+  creationTimestamp: "2022-06-01T01:47:45Z"
+  name: external-service-for-ingressexternalservice
+  namespace: default
+  resourceVersion: "2009912"
+  uid: 2e7da7ac-8bcf-471a-8028-8d19303cfcfd
+spec:
+  externalName: www.google.com
+  sessionAffinity: None
+  type: ExternalName
+status:
+  loadBalancer: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"nginx.org/location-snippets":"proxy_set_header Host www.google.com;\nerror_log  stderr info;\nrewrite /path / break;\n"},"creationTimestamp":"2022-08-29T06:11:59Z","generation":1,"name":"proxy-assets-ingress","namespace":"default","resourceVersion":"909504","uid":"efa89924-cb6c-4037-9c39-0ad14e4d29ac"},"spec":{"ingressClassName":"nginx","rules":[{"host":"abc.company.com","http":{"paths":[{"backend":{"service":{"name":"external-service-for-ingressexternalservice","port":{"number":80}}},"path":"/path","pathType":"Prefix"}]}}]},"status":{"loadBalancer":{}}}
+    nginx.org/location-snippets: |
+      proxy_set_header Host www.google.com;
+      error_log  stderr info;
+      rewrite /path / break;
+  creationTimestamp: "2022-08-29T06:11:59Z"
+  generation: 1
+  name: proxy-assets-ingress
+  namespace: default
+  resourceVersion: "909580"
+  uid: efa89924-cb6c-4037-9c39-0ad14e4d29ac
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: abc.company.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: external-service-for-ingressexternalservice
+            port:
+              number: 80
+        path: /path
+        pathType: Prefix
+status:
+  loadBalancer: {}
+
