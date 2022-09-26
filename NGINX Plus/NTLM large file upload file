@@ -91,7 +91,6 @@ spec:
   http-snippets: |
     upstream nginx-ingress-dmz-sub-ingress-non_gov_website-sub--dmz-svc-443 {
         zone nginx-ingress-dmz-sub-ingress-non_gov_website-sub--dmz-svc-443 512k;
-        #random two least_conn;
         server non_gov_website:443 max_fails=1 fail_timeout=10s max_conns=0 resolve;
         keepalive 16;
         ntlm;
